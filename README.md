@@ -18,6 +18,14 @@ Edit the `$accounts` list in `Create-CustomUsers.ps1` with your own usernames an
 .\Create-CustomUsers.ps1
 ```
 
+## Script 3: Login/logout each custom account once
+
+Runs a non-interactive process under each account, then exits it.
+
+```powershell
+.\Login-Logout-Users.ps1
+```
+
 ## Notes
 
 - Run scripts in **PowerShell as Administrator**.
