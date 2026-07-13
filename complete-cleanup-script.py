@@ -307,6 +307,44 @@ def cleanup_google_drive_cache():
     
     return total_freed
 
+def cleanup_onedrive_cache():
+    """Clean OneDrive cache and sync files"""
+    print_subheader("STEP 9: Cleaning OneDrive Cache")
+    
+    onedrive_cache_locations = [
+        "C:\\Users\\dell\\AppData\\Local\\Microsoft\\OneDrive\\logs",
+        "C:\\Users\\dell\\AppData\\Local\\Microsoft\\OneDrive\\cache",
+        "C:\\Users\\dell\\AppData\\Local\\Microsoft\\OneDrive\\thumbnails",
+    ]
+    
+    total_freed = 0
+    for location in onedrive_cache_locations:
+        if os.path.exists(location):
+            try:
+                clear_folder(location, f"OneDrive cache: {os.path.basename(location)}")
+                size = get_dir_size(location)
+                total_freed += round(size / (1024**3), 2)
+            except Exception as e:
+                print_warning(f"Could not clear {location}: {str(e)}")
+    
+    # Also try to clear OneDrive sync cache folder
+    onedrive_sync_path = "C:\\Users\\dell\\AppData\\Local\\Microsoft\\OneDrive"
+    if os.path.exists(onedrive_sync_path):
+        try:
+            # Don't delete the main folder, just problematic subfolders
+            problematic_folders = ["logs", "cache", "thumbnails", "settings", "Temp"]
+            for subfolder in problematic_folders:
+                subfolder_path = os.path.join(onedrive_sync_path, subfolder)
+                if os.path.exists(subfolder_path):
+                    try:
+                        shutil.rmtree(subfolder_path, ignore_errors=True)
+                    except:
+                        pass
+        except Exception as e:
+            print_warning(f"Could not clean OneDrive folders: {str(e)}")
+    
+    return total_freed
+
 def main():
     """Main cleanup routine"""
     print(f"\n{BOLD}{BLUE}")
@@ -352,7 +390,11 @@ def main():
     freed = cleanup_google_drive_cache()
     total_freed += freed
     
-    # Step 8: Analyze folders
+    # Step 8: OneDrive cache
+    freed = cleanup_onedrive_cache()
+    total_freed += freed
+    
+    # Step 9: Analyze folders
     top_folders = analyze_top_folders()
     
     # Get final drive space
@@ -384,15 +426,20 @@ def main():
     print("   Action: Delete Chrome profile to free ~11.83 GB")
     print("   Impact: Will clear browsing history and cache\n")
     
-    print("2. Large Repositories")
+    print("2. OneDrive Sync Folder")
+    print("   Location: C:\\Users\\dell\\OneDrive")
+    print("   Action: Move or archive OneDrive folder to D: drive")
+    print("   Impact: Frees space while keeping files in cloud\n")
+    
+    print("3. Large Repositories")
     print("   Location: D:\\GitRepos (28 repositories)")
     print("   Status: Already on D: drive [OK] (84 GB free)\n")
     
-    print("3. Windows System Files")
+    print("4. Windows System Files")
     print("   Location: C:\\Windows (30.89 GB)")
     print("   Action: Run DISM cleanup for system file cleanup\n")
     
-    print("4. Program Files")
+    print("5. Program Files")
     print("   Location: C:\\Program Files & C:\\Program Files (x86)")
     print("   Action: Uninstall unused software\n")
     
