@@ -1,18 +1,25 @@
 # windows-user-creation-script
 
-PowerShell script to create 7 local Windows user accounts.
+PowerShell scripts to create local Windows user accounts.
 
-## Usage
+## Script 1: Create 7 default users
 
-1. Open **PowerShell as Administrator**.
-2. Run the script:
+Creates users `user01` to `user07` with a shared temporary password.
 
 ```powershell
 .\Create-7Users.ps1
 ```
 
+## Script 2: Create custom users with unique passwords
+
+Edit the `$accounts` list in `Create-CustomUsers.ps1` with your own usernames and passwords, then run:
+
+```powershell
+.\Create-CustomUsers.ps1
+```
+
 ## Notes
 
-- The script creates users: `user01` to `user07`.
-- Default temporary password is `Temp@12345`.
-- Change the password value before production use.
+- Run scripts in **PowerShell as Administrator**.
+- Users that already exist are skipped.
+- Replace example passwords before production use.
