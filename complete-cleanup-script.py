@@ -1,16 +1,17 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Complete Windows Disk Cleanup Script
-=====================================
+Complete Windows Disk Cleanup Script with System Resource Monitoring
+=====================================================================
 Comprehensive cleanup script combining all cleanup operations from the session.
-Includes: temp files, cache, Dropbox, Chrome, Windows Update, and disk analysis.
+Includes: temp files, cache, Dropbox, Chrome, OneDrive, and system resource monitoring.
 """
 
 import os
 import sys
 import shutil
 import subprocess
+import psutil
 from datetime import datetime
 from pathlib import Path
 
@@ -288,6 +289,67 @@ def analyze_top_folders():
     print()
     return sorted_folders
 
+def get_system_resources():
+    """Get current system resource usage"""
+    try:
+        # CPU usage
+        cpu_percent = psutil.cpu_percent(interval=1)
+        
+        # Memory usage
+        memory = psutil.virtual_memory()
+        mem_percent = memory.percent
+        mem_used_gb = round(memory.used / (1024**3), 2)
+        mem_total_gb = round(memory.total / (1024**3), 2)
+        mem_available_gb = round(memory.available / (1024**3), 2)
+        
+        # Disk usage (C: drive)
+        c_drive = get_drive_info('C')
+        
+        # Process count
+        process_count = len(psutil.pids())
+        
+        # System uptime
+        boot_time = datetime.fromtimestamp(psutil.boot_time())
+        uptime = datetime.now() - boot_time
+        uptime_str = f"{uptime.days}d {uptime.seconds // 3600}h {(uptime.seconds % 3600) // 60}m"
+        
+        return {
+            'cpu_percent': cpu_percent,
+            'memory_percent': mem_percent,
+            'memory_used_gb': mem_used_gb,
+            'memory_total_gb': mem_total_gb,
+            'memory_available_gb': mem_available_gb,
+            'process_count': process_count,
+            'uptime': uptime_str,
+            'disk_c': c_drive
+        }
+    except Exception as e:
+        print_error(f"Error getting system resources: {str(e)}")
+        return None
+
+def display_system_resources(resources, label=""):
+    """Display system resource usage"""
+    if not resources:
+        return
+    
+    print_subheader(f"System Resource Monitor {label}")
+    
+    print(f"CPU Usage:")
+    print(f"  {resources['cpu_percent']:.1f}%\n")
+    
+    print(f"Memory Usage:")
+    print(f"  Used:      {resources['memory_used_gb']:.2f} GB / {resources['memory_total_gb']:.2f} GB ({resources['memory_percent']:.1f}%)")
+    print(f"  Available: {resources['memory_available_gb']:.2f} GB\n")
+    
+    print(f"C: Drive:")
+    print(f"  Total:     {resources['disk_c']['total']:.2f} GB")
+    print(f"  Used:      {resources['disk_c']['used']:.2f} GB ({resources['disk_c']['percent_used']:.1f}%)")
+    print(f"  Free:      {resources['disk_c']['free']:.2f} GB\n")
+    
+    print(f"System:")
+    print(f"  Processes: {resources['process_count']}")
+    print(f"  Uptime:    {resources['uptime']}\n")
+
 def cleanup_google_drive_cache():
     """Clean Google Drive cache files"""
     print_subheader("STEP 8: Cleaning Google Drive Cache")
@@ -350,10 +412,26 @@ def main():
     print(f"\n{BOLD}{BLUE}")
     print("=" * 80)
     print("COMPLETE WINDOWS DISK CLEANUP SCRIPT".center(80))
+    print("WITH SYSTEM RESOURCE MONITORING".center(80))
     print("=" * 80)
     print(f"{RESET}\n")
     
     print_info(f"Cleanup started at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+    
+    # Check if psutil is available
+    has_psutil = True
+    try:
+        import psutil
+    except ImportError:
+        has_psutil = False
+        print_warning("psutil not installed - system resource monitoring disabled")
+        print_info("Install with: pip install psutil\n")
+    
+    # Get initial system resources
+    if has_psutil:
+        print_header("INITIAL SYSTEM RESOURCES")
+        initial_resources = get_system_resources()
+        display_system_resources(initial_resources, "(Before Cleanup)")
     
     # Get initial drive space
     print_header("INITIAL DISK STATUS")
@@ -396,6 +474,22 @@ def main():
     
     # Step 9: Analyze folders
     top_folders = analyze_top_folders()
+    
+    # Get final system resources
+    if has_psutil:
+        print_header("FINAL SYSTEM RESOURCES")
+        final_resources = get_system_resources()
+        display_system_resources(final_resources, "(After Cleanup)")
+        
+        # Display resource improvements
+        print_subheader("System Resource Changes")
+        cpu_change = final_resources['cpu_percent'] - initial_resources['cpu_percent']
+        mem_change = final_resources['memory_percent'] - initial_resources['memory_percent']
+        disk_change = final_resources['disk_c']['free'] - initial_resources['disk_c']['free']
+        
+        print(f"CPU Usage:     {initial_resources['cpu_percent']:.1f}% -> {final_resources['cpu_percent']:.1f}% ({cpu_change:+.1f}%)")
+        print(f"Memory Usage:  {initial_resources['memory_percent']:.1f}% -> {final_resources['memory_percent']:.1f}% ({mem_change:+.1f}%)")
+        print(f"Disk (C:):     {initial_resources['disk_c']['free']:.2f} GB -> {final_resources['disk_c']['free']:.2f} GB ({disk_change:+.2f} GB)\n")
     
     # Get final drive space
     print_header("FINAL DISK STATUS")
