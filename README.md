@@ -1,6 +1,6 @@
 # windows-user-creation-script
 
-PowerShell scripts to create local Windows user accounts.
+PowerShell scripts to create and prepare local Windows user accounts.
 
 ## Script 1: Create 7 default users
 
@@ -26,8 +26,28 @@ Runs a non-interactive process under each account, then exits it.
 .\Login-Logout-Users.ps1
 ```
 
+## Script 4: Set up git + SSH for each user and clone starter repo
+
+Configures per-user git identity, generates SSH keys, and clones starter repo.
+
+```powershell
+.\Setup-Git-For-Users.ps1
+```
+
+## Script 5: Export all users' public SSH keys
+
+Collects keys into one file:
+
+```powershell
+.\Export-User-SSH-PublicKeys.ps1
+```
+
+Output file:
+
+- `C:\Users\Public\all-user-ssh-public-keys.txt`
+
 ## Notes
 
 - Run scripts in **PowerShell as Administrator**.
-- Users that already exist are skipped.
+- Users that already exist are skipped by creation scripts.
 - Replace example passwords before production use.
