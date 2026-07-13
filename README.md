@@ -46,6 +46,30 @@ Output file:
 
 - `C:\Users\Public\all-user-ssh-public-keys.txt`
 
+## Script 6: Free up C drive (standard cleanup)
+
+```powershell
+.\Free-Up-CDrive.ps1
+```
+
+Optional aggressive mode:
+
+```powershell
+.\Free-Up-CDrive.ps1 -Aggressive
+```
+
+## Script 7: Free up C drive (deep cleanup)
+
+```powershell
+.\Deep-Free-Up-CDrive.ps1
+```
+
+Optional downloads + aggressive mode:
+
+```powershell
+.\Deep-Free-Up-CDrive.ps1 -CleanDownloads -DownloadsDays 30 -Aggressive
+```
+
 ## Notes
 
 - Run scripts in **PowerShell as Administrator**.
