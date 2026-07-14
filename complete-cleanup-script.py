@@ -175,7 +175,7 @@ def cleanup_windows_update_cache():
         return 0
 
 def cleanup_chrome_cache():
-    """Clean Chrome cache (without closing Chrome)"""
+    """Clean Chrome cache and removable model data (without closing Chrome)"""
     print_subheader("STEP 3: Cleaning Chrome Cache")
     
     chrome_cache_paths = [
@@ -183,7 +183,8 @@ def cleanup_chrome_cache():
         "C:\\Users\\dell\\AppData\\Local\\Google\\Chrome\\User Data\\Default\\Code Cache",
         "C:\\Users\\dell\\AppData\\Local\\Google\\Chrome\\User Data\\Default\\Service Worker\\Cache",
         "C:\\Users\\dell\\AppData\\Local\\Google\\Chrome\\User Data\\Default\\Cache Storage",
-        "C:\\Users\\dell\\AppData\\Local\\Google\\Chrome\\User Data\\Default\\GPUCache"
+        "C:\\Users\\dell\\AppData\\Local\\Google\\Chrome\\User Data\\Default\\GPUCache",
+        "C:\\Users\\dell\\AppData\\Local\\Google\\Chrome\\User Data\\OptGuideOnDeviceModel"
     ]
     
     total_freed = 0
@@ -562,10 +563,10 @@ def main():
     # Recommendations
     print_header("RECOMMENDATIONS FOR FURTHER CLEANUP")
     
-    print("1. Chrome Profile (11.83 GB)")
+    print("1. Chrome Profile + AI Model Data")
     print("   Location: C:\\Users\\dell\\AppData\\Local\\Google\\Chrome")
-    print("   Action: Delete Chrome profile to free ~11.83 GB")
-    print("   Impact: Will clear browsing history and cache\n")
+    print("   Action: Cleanup removes cache and OptGuideOnDeviceModel when present")
+    print("   Impact: May trigger model re-download if Chrome on-device AI is used again\n")
     
     print("2. OneDrive Sync Folder")
     print("   Location: C:\\Users\\dell\\OneDrive")
