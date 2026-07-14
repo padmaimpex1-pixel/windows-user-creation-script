@@ -4,7 +4,7 @@
 Complete Windows Disk Cleanup Script with System Resource Monitoring
 =====================================================================
 Comprehensive cleanup script combining all cleanup operations from the session.
-Includes: temp files, cache, Dropbox, Chrome, OneDrive, and system resource monitoring.
+Includes: temp files, cache, Dropbox, Chrome, OneDrive, Downloads move to D:, and system resource monitoring.
 """
 
 import os
@@ -251,7 +251,7 @@ def cleanup_recycle_bin():
 
 def analyze_top_folders():
     """Analyze top 20 largest folders on C: drive"""
-    print_subheader("STEP 7: Analyzing Top 20 Largest Folders")
+    print_subheader("STEP 10: Analyzing Top 20 Largest Folders")
     
     print("Scanning C: drive (this takes a moment)...\n")
     
@@ -352,7 +352,7 @@ def display_system_resources(resources, label=""):
 
 def cleanup_google_drive_cache():
     """Clean Google Drive cache files"""
-    print_subheader("STEP 8: Cleaning Google Drive Cache")
+    print_subheader("STEP 7: Cleaning Google Drive Cache")
     
     gdrive_cache_locations = [
         "C:\\Users\\dell\\AppData\\Local\\Google\\Drive",
@@ -371,7 +371,7 @@ def cleanup_google_drive_cache():
 
 def cleanup_onedrive_cache():
     """Clean OneDrive cache and sync files"""
-    print_subheader("STEP 9: Cleaning OneDrive Cache")
+    print_subheader("STEP 8: Cleaning OneDrive Cache")
     
     onedrive_cache_locations = [
         "C:\\Users\\dell\\AppData\\Local\\Microsoft\\OneDrive\\logs",
@@ -405,6 +405,49 @@ def cleanup_onedrive_cache():
         except Exception as e:
             print_warning(f"Could not clean OneDrive folders: {str(e)}")
     
+    return total_freed
+
+def move_downloads_to_d_drive():
+    """Move Downloads content from C: to D: to free space"""
+    print_subheader("STEP 9: Moving Downloads to D Drive")
+
+    move_jobs = [
+        ("C:\\Users\\Public\\Downloads", "D:\\Downloads\\Public"),
+        ("C:\\Users\\dell\\Downloads", "D:\\Downloads\\dell"),
+    ]
+
+    total_freed = 0
+    for src, dst in move_jobs:
+        if not os.path.exists(src):
+            print_info(f"Source not found (skipped): {src}")
+            continue
+
+        os.makedirs(dst, exist_ok=True)
+        before = get_dir_size(src)
+
+        try:
+            for name in os.listdir(src):
+                src_item = os.path.join(src, name)
+                dst_item = os.path.join(dst, name)
+
+                if os.path.exists(dst_item):
+                    if os.path.isdir(src_item):
+                        shutil.copytree(src_item, dst_item, dirs_exist_ok=True)
+                        shutil.rmtree(src_item, ignore_errors=True)
+                    else:
+                        shutil.copy2(src_item, dst_item)
+                        os.remove(src_item)
+                else:
+                    shutil.move(src_item, dst)
+
+            after = get_dir_size(src)
+            freed = max(0, before - after)
+            freed_gb = round(freed / (1024**3), 2)
+            total_freed += freed_gb
+            print_success(f"Moved Downloads: {src} -> {dst} ({freed_gb} GB)")
+        except Exception as e:
+            print_warning(f"Could not fully move {src} -> {dst}: {str(e)}")
+
     return total_freed
 
 def main():
@@ -472,7 +515,11 @@ def main():
     freed = cleanup_onedrive_cache()
     total_freed += freed
     
-    # Step 9: Analyze folders
+    # Step 9: Move Downloads to D:
+    freed = move_downloads_to_d_drive()
+    total_freed += freed
+
+    # Step 10: Analyze folders
     top_folders = analyze_top_folders()
     
     # Get final system resources
@@ -525,15 +572,19 @@ def main():
     print("   Action: Move or archive OneDrive folder to D: drive")
     print("   Impact: Frees space while keeping files in cloud\n")
     
-    print("3. Large Repositories")
+    print("3. Downloads")
+    print("   Location: D:\\Downloads\\Public and D:\\Downloads\\dell")
+    print("   Status: Moved from C: to D: by this script\n")
+
+    print("4. Large Repositories")
     print("   Location: D:\\GitRepos (28 repositories)")
     print("   Status: Already on D: drive [OK] (84 GB free)\n")
     
-    print("4. Windows System Files")
+    print("5. Windows System Files")
     print("   Location: C:\\Windows (30.89 GB)")
     print("   Action: Run DISM cleanup for system file cleanup\n")
     
-    print("5. Program Files")
+    print("6. Program Files")
     print("   Location: C:\\Program Files & C:\\Program Files (x86)")
     print("   Action: Uninstall unused software\n")
     
