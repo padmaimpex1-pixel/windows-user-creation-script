@@ -4,7 +4,7 @@
 Complete Windows Disk Cleanup Script with System Resource Monitoring
 =====================================================================
 Comprehensive cleanup script combining all cleanup operations from the session.
-Includes: temp files, cache, Dropbox, Chrome, OneDrive, Downloads move to D:, and system resource monitoring.
+Includes: temp files, cache, Dropbox, Chrome, OneDrive, Downloads move to D:, Git repos move to D:, and system resource monitoring.
 """
 
 import os
@@ -252,7 +252,7 @@ def cleanup_recycle_bin():
 
 def analyze_top_folders():
     """Analyze top 20 largest folders on C: drive"""
-    print_subheader("STEP 10: Analyzing Top 20 Largest Folders")
+    print_subheader("STEP 11: Analyzing Top 20 Largest Folders")
     
     print("Scanning C: drive (this takes a moment)...\n")
     
@@ -451,6 +451,56 @@ def move_downloads_to_d_drive():
 
     return total_freed
 
+def move_git_repos_to_d_drive():
+    """Move top-level git repositories from C:\\Users\\dell to D:\\GitRepos\\moved-from-C"""
+    print_subheader("STEP 10: Moving Git Repositories to D Drive")
+
+    source_root = "C:\\Users\\dell"
+    dest_root = "D:\\GitRepos\\moved-from-C"
+    os.makedirs(dest_root, exist_ok=True)
+
+    repos = []
+    for dirpath, dirnames, _ in os.walk(source_root):
+        # Skip heavy/system trees not meant for migration
+        if dirpath.startswith("C:\\Users\\dell\\AppData\\") or dirpath.startswith("C:\\Users\\dell\\.copilot\\"):
+            dirnames[:] = []
+            continue
+
+        if ".git" in dirnames:
+            repos.append(dirpath)
+            # Do not descend into nested folders of this repo now
+            dirnames[:] = []
+
+    if not repos:
+        print_info("No eligible git repositories found under C:\\Users\\dell")
+        return 0
+
+    # Keep top-level repos only (avoid moving nested repos separately)
+    repos = sorted(set(repos))
+    top_level = []
+    for repo in repos:
+        if not any(repo.startswith(parent + "\\") for parent in repos if parent != repo):
+            top_level.append(repo)
+
+    total_freed = 0
+    for repo in top_level:
+        repo_name = os.path.basename(repo)
+        target = os.path.join(dest_root, repo_name)
+        if os.path.exists(target):
+            print_info(f"Already on D: (skipped): {target}")
+            continue
+
+        before = get_dir_size(repo)
+        try:
+            shutil.move(repo, target)
+            freed_gb = round(before / (1024**3), 2)
+            total_freed += freed_gb
+            print_success(f"Moved repo: {repo} -> {target} ({freed_gb} GB)")
+        except Exception as e:
+            print_warning(f"Could not move repo {repo}: {str(e)}")
+
+    return total_freed
+
 def main():
     """Main cleanup routine"""
     print(f"\n{BOLD}{BLUE}")
@@ -520,7 +570,11 @@ def main():
     freed = move_downloads_to_d_drive()
     total_freed += freed
 
-    # Step 10: Analyze folders
+    # Step 10: Move git repos to D:
+    freed = move_git_repos_to_d_drive()
+    total_freed += freed
+
+    # Step 11: Analyze folders
     top_folders = analyze_top_folders()
     
     # Get final system resources
@@ -577,9 +631,9 @@ def main():
     print("   Location: D:\\Downloads\\Public and D:\\Downloads\\dell")
     print("   Status: Moved from C: to D: by this script\n")
 
-    print("4. Large Repositories")
-    print("   Location: D:\\GitRepos (28 repositories)")
-    print("   Status: Already on D: drive [OK] (84 GB free)\n")
+    print("4. Git Repositories")
+    print("   Location: D:\\GitRepos\\moved-from-C and D:\\GitRepos")
+    print("   Status: Migration from C: to D: supported by this script\n")
     
     print("5. Windows System Files")
     print("   Location: C:\\Windows (30.89 GB)")
